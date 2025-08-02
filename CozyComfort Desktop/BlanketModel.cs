@@ -239,5 +239,82 @@ namespace CozyComfort_Desktop
                 MessageBox.Show($"An error occurred during Add: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
+        private void btnDelete_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(lblID.Text))
+            {
+                MessageBox.Show("Please select a model to update.", "Missing ID", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (!int.TryParse(lblID.Text, out int modelId))
+            {
+                MessageBox.Show("Invalid Model ID.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            string url = "https://localhost:7175/api/BlanketModel/" + modelId;
+            HttpClient client = new HttpClient();
+            Item itemToDelete = new Item();
+
+            string data = (new JavaScriptSerializer()).Serialize(itemToDelete);
+
+            try
+            {
+                DialogResult dialogResult = MessageBox.Show("Are you sure you want to delete?", "Confirm Delete",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (dialogResult == DialogResult.Yes)
+                {
+                    var response = client.DeleteAsync(url).Result;
+                    if (response.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show("Blanket Model Deleted successfully!");
+                        LoadData();
+                        ClearForm();
+                    }
+                    else
+                    {
+                        string errorContent = response.Content.ReadAsStringAsync().Result;
+                        MessageBox.Show($"Failed to delete model. Status: {response.StatusCode}\nDetails: {errorContent}", "Update Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred during delete: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnFind_Click(object sender, EventArgs e)
+        {
+            ClearForm();
+            if (string.IsNullOrWhiteSpace(txtID.Text))
+            {
+                MessageBox.Show("Please type a model ID", "Missing ID", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            String modelID = txtID.Text;
+            string url = "https://localhost:7175/api/BlanketModel/"+modelID;
+            HttpClient client = new HttpClient();
+            var response = client.GetAsync(url).Result;
+            if (response.IsSuccessStatusCode)
+            {
+                var read = response.Content.ReadAsStringAsync();
+                read.Wait();
+                dgvModel.DataSource = null;
+                Item item1 = (new JavaScriptSerializer()).Deserialize<Item>(read.Result);
+                List<Item> items = new List<Item>();
+                items.Add(item1);
+                dgvModel.DataSource = items;
+            }
+
+        }
+
+        private void btnViewAll_Click(object sender, EventArgs e)
+        {
+            LoadData();
+            ClearForm();
+        }
     }
 }
