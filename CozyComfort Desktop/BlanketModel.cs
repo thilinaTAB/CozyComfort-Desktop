@@ -4,11 +4,12 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.Net.Http;
 using System.Web.Script.Serialization;
+using System.Windows.Forms;
+using System.Xml.Linq;
 
 
 namespace CozyComfort_Desktop
@@ -88,6 +89,154 @@ namespace CozyComfort_Desktop
                 cbMaterial.Text = dgvModel.Rows[row].Cells[6].Value.ToString();
                 lblMaterialDes.Text = dgvModel.Rows[row].Cells[7].Value.ToString();
 
+            }
+        }
+
+        private void ClearForm()
+        {
+            lblID.Text = "";
+            txtModelName.Text = "";
+            txtModelDes.Text = "";
+            txtStock.Text = "";
+            txtPrice.Text = "";
+            cbMaterial.SelectedIndex = -1;
+            lblMaterialDes.Text = "";
+        }
+
+        private void btnUpdate_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(lblID.Text))
+            {
+                MessageBox.Show("Please select a model to update.", "Missing ID", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (!int.TryParse(lblID.Text, out int modelId))
+            {
+                MessageBox.Show("Invalid Model ID.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            string url = "https://localhost:7175/api/BlanketModel/" + modelId;
+            HttpClient client = new HttpClient();
+            Item itemToUpdate = new Item(); 
+            itemToUpdate.ModelID = modelId;
+            itemToUpdate.ModelName = txtModelName.Text;
+            itemToUpdate.Description = txtModelDes.Text;
+
+            if (int.TryParse(txtStock.Text, out int stock))
+            {
+                itemToUpdate.Stock = stock;
+            }
+            else
+            {
+                MessageBox.Show("Invalid Stock value.", "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (decimal.TryParse(txtPrice.Text, out decimal price))
+            {
+                itemToUpdate.Price = price;
+            }
+            else
+            {
+                MessageBox.Show("Invalid Price value.", "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (cbMaterial.SelectedValue != null)
+            {
+                itemToUpdate.MaterialID = (int)cbMaterial.SelectedValue;
+            }
+            else
+            {
+                MessageBox.Show("Please select a Material.", "Missing Selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            string data = (new JavaScriptSerializer()).Serialize(itemToUpdate);
+            var request = new StringContent(data, Encoding.UTF8, "application/json");
+
+            try
+            {
+                var response = client.PutAsync(url, request).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Model updated successfully!");
+                    LoadData(); 
+                    ClearForm();
+                }
+                else
+                {
+                    string errorContent = response.Content.ReadAsStringAsync().Result;
+                    MessageBox.Show($"Failed to update model. Status: {response.StatusCode}\nDetails: {errorContent}", "Update Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred during update: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnAdd_Click(object sender, EventArgs e)
+        {
+            string url = "https://localhost:7175/api/BlanketModel";
+            HttpClient client = new HttpClient();
+            Item itemToAdd = new Item();
+            itemToAdd.ModelName = txtModelName.Text;
+            itemToAdd.Description = txtModelDes.Text;
+
+            if (int.TryParse(txtStock.Text, out int stock))
+            {
+                itemToAdd.Stock = stock;
+            }
+            else
+            {
+                MessageBox.Show("Invalid Stock value.", "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (decimal.TryParse(txtPrice.Text, out decimal price))
+            {
+                itemToAdd.Price = price;
+            }
+            else
+            {
+                MessageBox.Show("Invalid Price value.", "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (cbMaterial.SelectedValue != null)
+            {
+                itemToAdd.MaterialID = (int)cbMaterial.SelectedValue;
+            }
+            else
+            {
+                MessageBox.Show("Please select a Material.", "Missing Selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            string data = (new JavaScriptSerializer()).Serialize(itemToAdd);
+            var request = new StringContent(data, Encoding.UTF8, "application/json");
+
+            try
+            {
+                var response = client.PostAsync(url, request).Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Blanket Model Added successfully!");
+                    LoadData();
+                    ClearForm();
+                }
+                else
+                {
+                    string errorContent = response.Content.ReadAsStringAsync().Result;
+                    MessageBox.Show($"Failed to Add Blanket model. Status: {response.StatusCode}\nDetails: {errorContent}", "Update Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred during Add: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }
