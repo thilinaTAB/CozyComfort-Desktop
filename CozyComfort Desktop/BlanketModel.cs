@@ -18,6 +18,8 @@ namespace CozyComfort_Desktop
         public BlanketModel()
         {
             InitializeComponent();
+            cbMaterial.SelectedIndexChanged += cbMaterial_SelectedIndexChanged;
+
         }
 
         
@@ -25,6 +27,7 @@ namespace CozyComfort_Desktop
         private void BlanketModel_Load(object sender, EventArgs e)
         {
             LoadData();
+            LoadMaterials();
         }
         
         private void LoadData()
@@ -39,8 +42,36 @@ namespace CozyComfort_Desktop
                 dgvModel.DataSource = null;
                 dgvModel.DataSource = (new JavaScriptSerializer()).Deserialize<List<Item>>(read.Result);
             }
+        }
 
+        private void LoadMaterials()
+        {
+            string url = "https://localhost:7175/api/Material";
+            HttpClient client = new HttpClient();
+            var response = client.GetAsync(url).Result;
+            if (response.IsSuccessStatusCode)
+            {
+                var read = response.Content.ReadAsStringAsync();
+                read.Wait();
 
+                var materials = (new JavaScriptSerializer()).Deserialize<List<Material>>(read.Result);
+
+                cbMaterial.DataSource = materials;
+                cbMaterial.DisplayMember = "MaterialName";
+                cbMaterial.ValueMember = "MaterialID";
+            }
+            else
+            {
+                MessageBox.Show("Failed to load materials");
+            }
+        }
+
+        private void cbMaterial_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (cbMaterial.SelectedItem is Material selectedMaterial)
+            {
+                lblMaterialDes.Text = selectedMaterial.Description;
+            }
         }
 
         private void dgvModel_CellContentClick(object sender, DataGridViewCellEventArgs e)
