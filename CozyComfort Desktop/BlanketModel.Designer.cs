@@ -61,6 +61,7 @@
             this.lblID.Name = "lblID";
             this.lblID.Size = new System.Drawing.Size(0, 13);
             this.lblID.TabIndex = 27;
+            this.lblID.Visible = false;
             // 
             // btnDelete
             // 

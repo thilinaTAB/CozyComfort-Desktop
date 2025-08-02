@@ -86,8 +86,7 @@ namespace CozyComfort_Desktop
                 txtModelDes.Text = dgvModel.Rows[row].Cells[3].Value.ToString();
                 txtStock.Text = dgvModel.Rows[row].Cells[4].Value.ToString();
                 txtPrice.Text = dgvModel.Rows[row].Cells[5].Value.ToString();
-                cbMaterial.Text = dgvModel.Rows[row].Cells[6].Value.ToString();
-                lblMaterialDes.Text = dgvModel.Rows[row].Cells[7].Value.ToString();
+                cbMaterial.Text = dgvModel.Rows[row].Cells[7].Value.ToString();
 
             }
         }
@@ -159,17 +158,22 @@ namespace CozyComfort_Desktop
 
             try
             {
-                var response = client.PutAsync(url, request).Result;
-                if (response.IsSuccessStatusCode)
+                DialogResult dialogResult = MessageBox.Show("Are you sure you want to update?", "Confirm Update",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (dialogResult == DialogResult.Yes)
                 {
-                    MessageBox.Show("Model updated successfully!");
-                    LoadData(); 
-                    ClearForm();
-                }
-                else
-                {
-                    string errorContent = response.Content.ReadAsStringAsync().Result;
-                    MessageBox.Show($"Failed to update model. Status: {response.StatusCode}\nDetails: {errorContent}", "Update Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    var response = client.PutAsync(url, request).Result;
+                    if (response.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show("Model updated successfully!");
+                        LoadData();
+                        ClearForm();
+                    }
+                    else
+                    {
+                        string errorContent = response.Content.ReadAsStringAsync().Result;
+                        MessageBox.Show($"Failed to update model. Status: {response.StatusCode}\nDetails: {errorContent}", "Update Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 }
             }
             catch (Exception ex)
@@ -186,6 +190,12 @@ namespace CozyComfort_Desktop
             itemToAdd.ModelName = txtModelName.Text;
             itemToAdd.Description = txtModelDes.Text;
 
+
+            if (string.IsNullOrWhiteSpace(txtModelName.Text))
+            {
+                MessageBox.Show("Please input a Model Name", "Model Name Required", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
             if (int.TryParse(txtStock.Text, out int stock))
             {
                 itemToAdd.Stock = stock;
@@ -220,19 +230,19 @@ namespace CozyComfort_Desktop
             var request = new StringContent(data, Encoding.UTF8, "application/json");
 
             try
-            {
-                var response = client.PostAsync(url, request).Result;
-                if (response.IsSuccessStatusCode)
-                {
-                    MessageBox.Show("Blanket Model Added successfully!");
-                    LoadData();
-                    ClearForm();
-                }
-                else
-                {
-                    string errorContent = response.Content.ReadAsStringAsync().Result;
-                    MessageBox.Show($"Failed to Add Blanket model. Status: {response.StatusCode}\nDetails: {errorContent}", "Update Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+            {         
+                    var response = client.PostAsync(url, request).Result;
+                    if (response.IsSuccessStatusCode)
+                    {
+                        MessageBox.Show("Blanket Model Added successfully!");
+                        LoadData();
+                        ClearForm();
+                    }
+                    else
+                    {
+                        string errorContent = response.Content.ReadAsStringAsync().Result;
+                        MessageBox.Show($"Failed to Add Blanket model. Status: {response.StatusCode}\nDetails: {errorContent}", "Update Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
             }
             catch (Exception ex)
             {
@@ -244,7 +254,7 @@ namespace CozyComfort_Desktop
         {
             if (string.IsNullOrWhiteSpace(lblID.Text))
             {
-                MessageBox.Show("Please select a model to update.", "Missing ID", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Please select a model to delete.", "Missing ID", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -288,10 +298,9 @@ namespace CozyComfort_Desktop
 
         private void btnFind_Click(object sender, EventArgs e)
         {
-            ClearForm();
             if (string.IsNullOrWhiteSpace(txtID.Text))
             {
-                MessageBox.Show("Please type a model ID", "Missing ID", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Please input a Model ID", "Missing ID", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
             String modelID = txtID.Text;
@@ -307,6 +316,17 @@ namespace CozyComfort_Desktop
                 List<Item> items = new List<Item>();
                 items.Add(item1);
                 dgvModel.DataSource = items;
+
+                ClearForm();
+
+            }
+            else
+            {
+                dgvModel.DataSource = null;
+                MessageBox.Show("No blanket model found with the given ID.", "Not Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ClearForm();
+                LoadData();
+                return;
             }
 
         }
