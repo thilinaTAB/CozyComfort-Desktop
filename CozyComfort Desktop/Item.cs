@@ -13,6 +13,7 @@ namespace CozyComfort_Desktop
         public string Description { get; set; }
         public int Stock { get; set; }
         public decimal Price { get; set; }
+        public int MaterialID { get; set; }
         public string MaterialName { get; set; }
         public string MaterialDescription { get; set; }
     }
