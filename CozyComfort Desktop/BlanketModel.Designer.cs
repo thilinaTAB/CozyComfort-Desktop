@@ -45,13 +45,13 @@
             this.label4 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
-            this.dataGridView1 = new System.Windows.Forms.DataGridView();
+            this.dgvModel = new System.Windows.Forms.DataGridView();
             this.Blanket = new System.Windows.Forms.DataGridViewButtonColumn();
             this.btnViewAll = new System.Windows.Forms.Button();
             this.btnFind = new System.Windows.Forms.Button();
             this.txtID = new System.Windows.Forms.TextBox();
             this.lbl = new System.Windows.Forms.Label();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvModel)).BeginInit();
             this.SuspendLayout();
             // 
             // lblID
@@ -198,15 +198,16 @@
             this.label1.TabIndex = 10;
             this.label1.Text = "Model Name";
             // 
-            // dataGridView1
+            // dgvModel
             // 
-            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.dgvModel.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvModel.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.Blanket});
-            this.dataGridView1.Location = new System.Drawing.Point(308, 58);
-            this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.Size = new System.Drawing.Size(738, 310);
-            this.dataGridView1.TabIndex = 28;
+            this.dgvModel.Location = new System.Drawing.Point(308, 58);
+            this.dgvModel.Name = "dgvModel";
+            this.dgvModel.Size = new System.Drawing.Size(1000, 310);
+            this.dgvModel.TabIndex = 28;
+            this.dgvModel.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvModel_CellContentClick);
             // 
             // Blanket
             // 
@@ -251,12 +252,12 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1058, 450);
+            this.ClientSize = new System.Drawing.Size(1370, 450);
             this.Controls.Add(this.btnViewAll);
             this.Controls.Add(this.btnFind);
             this.Controls.Add(this.txtID);
             this.Controls.Add(this.lbl);
-            this.Controls.Add(this.dataGridView1);
+            this.Controls.Add(this.dgvModel);
             this.Controls.Add(this.lblID);
             this.Controls.Add(this.btnDelete);
             this.Controls.Add(this.btnUpdate);
@@ -276,8 +277,9 @@
             this.Controls.Add(this.label1);
             this.Name = "BlanketModel";
             this.Text = "Blanket Model";
+            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Load += new System.EventHandler(this.BlanketModel_Load);
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvModel)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -302,7 +304,7 @@
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.DataGridView dataGridView1;
+        private System.Windows.Forms.DataGridView dgvModel;
         private System.Windows.Forms.DataGridViewButtonColumn Blanket;
         private System.Windows.Forms.Button btnViewAll;
         private System.Windows.Forms.Button btnFind;
