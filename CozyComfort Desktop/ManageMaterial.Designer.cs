@@ -53,6 +53,7 @@
             this.btnMaterialViewAll.TabIndex = 53;
             this.btnMaterialViewAll.Text = "View All";
             this.btnMaterialViewAll.UseVisualStyleBackColor = true;
+            this.btnMaterialViewAll.Click += new System.EventHandler(this.btnMaterialViewAll_Click);
             // 
             // btnMaterialFind
             // 
@@ -62,6 +63,7 @@
             this.btnMaterialFind.TabIndex = 54;
             this.btnMaterialFind.Text = "Find";
             this.btnMaterialFind.UseVisualStyleBackColor = true;
+            this.btnMaterialFind.Click += new System.EventHandler(this.btnMaterialFind_Click);
             // 
             // txtMaterialID
             // 
@@ -88,6 +90,7 @@
             this.dgvMaterial.Name = "dgvMaterial";
             this.dgvMaterial.Size = new System.Drawing.Size(744, 310);
             this.dgvMaterial.TabIndex = 50;
+            this.dgvMaterial.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvMaterial_CellContentClick);
             // 
             // Blanket
             // 
@@ -111,6 +114,7 @@
             this.btnMaterialDelete.TabIndex = 48;
             this.btnMaterialDelete.Text = "Delete";
             this.btnMaterialDelete.UseVisualStyleBackColor = true;
+            this.btnMaterialDelete.Click += new System.EventHandler(this.btnMaterialDelete_Click);
             // 
             // btnMaterialUpdate
             // 
@@ -120,6 +124,7 @@
             this.btnMaterialUpdate.TabIndex = 47;
             this.btnMaterialUpdate.Text = "Update";
             this.btnMaterialUpdate.UseVisualStyleBackColor = true;
+            this.btnMaterialUpdate.Click += new System.EventHandler(this.btnMaterialUpdate_Click);
             // 
             // btnMaterialAdd
             // 
@@ -129,6 +134,7 @@
             this.btnMaterialAdd.TabIndex = 46;
             this.btnMaterialAdd.Text = "Add";
             this.btnMaterialAdd.UseVisualStyleBackColor = true;
+            this.btnMaterialAdd.Click += new System.EventHandler(this.btnMaterialAdd_Click);
             // 
             // txtMaterialDes
             // 
@@ -183,6 +189,7 @@
             this.Controls.Add(this.label1);
             this.Name = "ManageMaterial";
             this.Text = "Manage Material";
+            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Load += new System.EventHandler(this.ManageMaterial_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgvMaterial)).EndInit();
             this.ResumeLayout(false);
