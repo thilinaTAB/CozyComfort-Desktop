@@ -57,6 +57,7 @@
             this.materialInventoryToolStripMenuItem.Name = "materialInventoryToolStripMenuItem";
             this.materialInventoryToolStripMenuItem.Size = new System.Drawing.Size(115, 20);
             this.materialInventoryToolStripMenuItem.Text = "Material inventory";
+            this.materialInventoryToolStripMenuItem.Click += new System.EventHandler(this.materialInventoryToolStripMenuItem_Click);
             // 
             // CozyComfort
             // 

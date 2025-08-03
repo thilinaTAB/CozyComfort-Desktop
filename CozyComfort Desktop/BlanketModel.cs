@@ -321,10 +321,6 @@ namespace CozyComfort_Desktop
                         List<Item> items = new List<Item> { foundItem };
                         dgvModel.DataSource = items;
 
-                        if (dgvModel.Rows.Count > 0)
-                        {
-                            dgvModel.Rows[0].Selected = true;
-                        }
                         ClearForm();
                     }
                     else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
@@ -356,5 +352,6 @@ namespace CozyComfort_Desktop
             LoadData();
             ClearForm();
         }
+
     }
 }

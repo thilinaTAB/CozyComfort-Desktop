@@ -15,22 +15,33 @@ namespace CozyComfort_Desktop
         public CozyComfort()
         {
             InitializeComponent();
+            this.IsMdiContainer = true;
+        }
+
+        private void CloseAllMdiChildren()
+        {
+            foreach (Form childForm in this.MdiChildren)
+            {
+                childForm.Close();
+            }
         }
 
         private void blanketModelToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            foreach (Form openForm in Application.OpenForms)
-            {
-                if (openForm is BlanketModel)
-                {
-                    openForm.BringToFront();
-                    openForm.Focus();
-                    return;
-                }
-            }
+            CloseAllMdiChildren();
+
             BlanketModel blanket = new BlanketModel();
             blanket.MdiParent = this;
             blanket.Show();
+        }
+
+        private void materialInventoryToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            CloseAllMdiChildren();
+           
+            ManageMaterial manageMaterial = new ManageMaterial();
+            manageMaterial.MdiParent = this;
+            manageMaterial.Show();
         }
     }
 }
