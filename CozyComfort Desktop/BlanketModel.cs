@@ -10,12 +10,35 @@ using System.Threading.Tasks;
 using System.Web.Script.Serialization;
 using System.Windows.Forms;
 using System.Xml.Linq;
+using System.Configuration;
 
 
 namespace CozyComfort_Desktop
 {
     public partial class BlanketModel : Form
     {
+        private HttpClient GetHttpClient()
+        {
+            HttpClient client = new HttpClient();
+            string apiKey = ConfigurationManager.AppSettings["CozyComfortManufacturerKey"];
+            if (!string.IsNullOrEmpty(apiKey))
+            {
+                client.DefaultRequestHeaders.Add("X-API-KEY", apiKey);
+            }
+            client.BaseAddress = new Uri("https://localhost:7175/"); // Ensure this matches your API's URL
+            return client;
+        }
+
+        private void ClearForm()
+        {
+            lblID.Text = "";
+            txtModelName.Text = "";
+            txtModelDes.Text = "";
+            txtStock.Text = "";
+            txtPrice.Text = "";
+            cbMaterial.SelectedIndex = -1;
+            lblMaterialDes.Text = "";
+        }
         public BlanketModel()
         {
             InitializeComponent();
@@ -30,40 +53,61 @@ namespace CozyComfort_Desktop
             LoadData();
             LoadMaterials();
         }
-        
+
         private void LoadData()
         {
-            string url = "https://localhost:7175/api/BlanketModel";
-            HttpClient client = new HttpClient();
-            var response = client.GetAsync(url).Result;
-            if (response.IsSuccessStatusCode)
+            using (HttpClient client = GetHttpClient())
             {
-                var read = response.Content.ReadAsStringAsync();
-                read.Wait();
-                dgvModel.DataSource = null;
-                dgvModel.DataSource = (new JavaScriptSerializer()).Deserialize<List<Item>>(read.Result);
+                try
+                {
+                    var response = client.GetAsync("api/BlanketModel").Result;
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var read = response.Content.ReadAsStringAsync().Result;
+                        dgvModel.DataSource = null;
+                        dgvModel.DataSource = (new JavaScriptSerializer()).Deserialize<List<Item>>(read);
+                    }
+                    else
+                    {
+                        string errorContent = response.Content.ReadAsStringAsync().Result;
+                        MessageBox.Show($"Failed to load models. Status: {response.StatusCode}\nDetails: {errorContent}", "API Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        dgvModel.DataSource = null;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"An error occurred while loading models: {ex.Message}", "Application Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    dgvModel.DataSource = null;
+                }
             }
         }
 
         private void LoadMaterials()
         {
-            string url = "https://localhost:7175/api/Material";
-            HttpClient client = new HttpClient();
-            var response = client.GetAsync(url).Result;
-            if (response.IsSuccessStatusCode)
+            using (HttpClient client = GetHttpClient())
             {
-                var read = response.Content.ReadAsStringAsync();
-                read.Wait();
+                try
+                {
+                    var response = client.GetAsync("api/Material").Result;
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var read = response.Content.ReadAsStringAsync().Result;
+                        var materials = (new JavaScriptSerializer()).Deserialize<List<Material>>(read);
 
-                var materials = (new JavaScriptSerializer()).Deserialize<List<Material>>(read.Result);
-
-                cbMaterial.DataSource = materials;
-                cbMaterial.DisplayMember = "MaterialName";
-                cbMaterial.ValueMember = "MaterialID";
-            }
-            else
-            {
-                MessageBox.Show("Failed to load materials");
+                        cbMaterial.DataSource = materials;
+                        cbMaterial.DisplayMember = "MaterialName";
+                        cbMaterial.ValueMember = "MaterialID";
+                    }
+                    else
+                    {
+                        string errorContent = response.Content.ReadAsStringAsync().Result;
+                        MessageBox.Show($"Failed to load materials. Status: {response.StatusCode}\nDetails: {errorContent}", "API Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"An error occurred while loading materials: {ex.Message}", "Application Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
@@ -91,16 +135,6 @@ namespace CozyComfort_Desktop
             }
         }
 
-        private void ClearForm()
-        {
-            lblID.Text = "";
-            txtModelName.Text = "";
-            txtModelDes.Text = "";
-            txtStock.Text = "";
-            txtPrice.Text = "";
-            cbMaterial.SelectedIndex = -1;
-            lblMaterialDes.Text = "";
-        }
 
         private void btnUpdate_Click(object sender, EventArgs e)
         {
@@ -116,51 +150,28 @@ namespace CozyComfort_Desktop
                 return;
             }
 
-            string url = "https://localhost:7175/api/BlanketModel/" + modelId;
-            HttpClient client = new HttpClient();
-            Item itemToUpdate = new Item(); 
-            itemToUpdate.ModelID = modelId;
-            itemToUpdate.ModelName = txtModelName.Text;
-            itemToUpdate.Description = txtModelDes.Text;
-
-            if (int.TryParse(txtStock.Text, out int stock))
+            using (HttpClient client = GetHttpClient())
             {
+                string url = "https://localhost:7175/api/BlanketModel/" + modelId;
+
+                Item itemToUpdate = new Item();
+                itemToUpdate.ModelID = modelId;
+                itemToUpdate.ModelName = txtModelName.Text;
+                itemToUpdate.Description = txtModelDes.Text;
+
+                if (!int.TryParse(txtStock.Text, out int stock)) { MessageBox.Show("Invalid Stock value.", "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Error); return; }
                 itemToUpdate.Stock = stock;
-            }
-            else
-            {
-                MessageBox.Show("Invalid Stock value.", "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
 
-            if (decimal.TryParse(txtPrice.Text, out decimal price))
-            {
+                if (!decimal.TryParse(txtPrice.Text, out decimal price)) { MessageBox.Show("Invalid Price value.", "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Error); return; }
                 itemToUpdate.Price = price;
-            }
-            else
-            {
-                MessageBox.Show("Invalid Price value.", "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
 
-            if (cbMaterial.SelectedValue != null)
-            {
+                if (cbMaterial.SelectedValue == null) { MessageBox.Show("Please select a Material.", "Missing Selection", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
                 itemToUpdate.MaterialID = (int)cbMaterial.SelectedValue;
-            }
-            else
-            {
-                MessageBox.Show("Please select a Material.", "Missing Selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
 
-            string data = (new JavaScriptSerializer()).Serialize(itemToUpdate);
-            var request = new StringContent(data, Encoding.UTF8, "application/json");
+                string data = (new JavaScriptSerializer()).Serialize(itemToUpdate);
+                var request = new StringContent(data, Encoding.UTF8, "application/json");
 
-            try
-            {
-                DialogResult dialogResult = MessageBox.Show("Are you sure you want to update?", "Confirm Update",
-                MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                if (dialogResult == DialogResult.Yes)
+                try
                 {
                     var response = client.PutAsync(url, request).Result;
                     if (response.IsSuccessStatusCode)
@@ -175,78 +186,54 @@ namespace CozyComfort_Desktop
                         MessageBox.Show($"Failed to update model. Status: {response.StatusCode}\nDetails: {errorContent}", "Update Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"An error occurred during update: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"An error occurred during update: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
         private void btnAdd_Click(object sender, EventArgs e)
         {
-            string url = "https://localhost:7175/api/BlanketModel";
-            HttpClient client = new HttpClient();
-            Item itemToAdd = new Item();
-            itemToAdd.ModelName = txtModelName.Text;
-            itemToAdd.Description = txtModelDes.Text;
+            using (HttpClient client = GetHttpClient())
+            {
+                string url = "https://localhost:7175/api/BlanketModel";
 
+                Item newItem = new Item();
+                newItem.ModelName = txtModelName.Text;
+                newItem.Description = txtModelDes.Text;
 
-            if (string.IsNullOrWhiteSpace(txtModelName.Text))
-            {
-                MessageBox.Show("Please input a Model Name", "Model Name Required", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-            if (int.TryParse(txtStock.Text, out int stock))
-            {
-                itemToAdd.Stock = stock;
-            }
-            else
-            {
-                MessageBox.Show("Invalid Stock value.", "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
+                if (!int.TryParse(txtStock.Text, out int stock)) { MessageBox.Show("Invalid Stock value.", "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Error); return; }
+                newItem.Stock = stock;
 
-            if (decimal.TryParse(txtPrice.Text, out decimal price))
-            {
-                itemToAdd.Price = price;
-            }
-            else
-            {
-                MessageBox.Show("Invalid Price value.", "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
+                if (!decimal.TryParse(txtPrice.Text, out decimal price)) { MessageBox.Show("Invalid Price value.", "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Error); return; }
+                newItem.Price = price;
 
-            if (cbMaterial.SelectedValue != null)
-            {
-                itemToAdd.MaterialID = (int)cbMaterial.SelectedValue;
-            }
-            else
-            {
-                MessageBox.Show("Please select a Material.", "Missing Selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
+                if (cbMaterial.SelectedValue == null) { MessageBox.Show("Please select a Material.", "Missing Selection", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
+                newItem.MaterialID = (int)cbMaterial.SelectedValue;
 
-            string data = (new JavaScriptSerializer()).Serialize(itemToAdd);
-            var request = new StringContent(data, Encoding.UTF8, "application/json");
+                string data = (new JavaScriptSerializer()).Serialize(newItem);
+                var request = new StringContent(data, Encoding.UTF8, "application/json");
 
-            try
-            {         
+                try
+                {
                     var response = client.PostAsync(url, request).Result;
                     if (response.IsSuccessStatusCode)
                     {
-                        MessageBox.Show("Blanket Model Added successfully!");
+                        MessageBox.Show("Model added successfully!");
                         LoadData();
                         ClearForm();
                     }
                     else
                     {
                         string errorContent = response.Content.ReadAsStringAsync().Result;
-                        MessageBox.Show($"Failed to Add Blanket model. Status: {response.StatusCode}\nDetails: {errorContent}", "Update Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show($"Failed to add model. Status: {response.StatusCode}\nDetails: {errorContent}", "Add Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"An error occurred during Add: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"An error occurred during addition: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
@@ -264,35 +251,43 @@ namespace CozyComfort_Desktop
                 return;
             }
 
-            string url = "https://localhost:7175/api/BlanketModel/" + modelId;
-            HttpClient client = new HttpClient();
-            Item itemToDelete = new Item();
+            DialogResult confirmResult = MessageBox.Show(
+                $"Are you sure you want to delete Model ID: {modelId}?",
+                "Confirm Delete",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question
+            );
 
-            string data = (new JavaScriptSerializer()).Serialize(itemToDelete);
-
-            try
+            if (confirmResult == DialogResult.Yes)
             {
-                DialogResult dialogResult = MessageBox.Show("Are you sure you want to delete?", "Confirm Delete",
-                MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                if (dialogResult == DialogResult.Yes)
+                using (HttpClient client = GetHttpClient())
                 {
-                    var response = client.DeleteAsync(url).Result;
-                    if (response.IsSuccessStatusCode)
+                    try
                     {
-                        MessageBox.Show("Blanket Model Deleted successfully!");
-                        LoadData();
-                        ClearForm();
+                        string url = "api/BlanketModel/" + modelId;
+                        var response = client.DeleteAsync(url).Result;
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            MessageBox.Show("Model deleted successfully!");
+                            LoadData();
+                            ClearForm();
+                        }
+                        else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                        {
+                            MessageBox.Show("Model not found on the server.", "Delete Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                        else
+                        {
+                            string errorContent = response.Content.ReadAsStringAsync().Result;
+                            MessageBox.Show($"Failed to delete model. Status: {response.StatusCode}\nDetails: {errorContent}", "Delete Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        string errorContent = response.Content.ReadAsStringAsync().Result;
-                        MessageBox.Show($"Failed to delete model. Status: {response.StatusCode}\nDetails: {errorContent}", "Update Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show($"An error occurred during deletion: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"An error occurred during delete: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -303,30 +298,55 @@ namespace CozyComfort_Desktop
                 MessageBox.Show("Please input a Model ID", "Missing ID", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            String modelID = txtID.Text;
-            string url = "https://localhost:7175/api/BlanketModel/"+modelID;
-            HttpClient client = new HttpClient();
-            var response = client.GetAsync(url).Result;
-            if (response.IsSuccessStatusCode)
-            {
-                var read = response.Content.ReadAsStringAsync();
-                read.Wait();
-                dgvModel.DataSource = null;
-                Item item1 = (new JavaScriptSerializer()).Deserialize<Item>(read.Result);
-                List<Item> items = new List<Item>();
-                items.Add(item1);
-                dgvModel.DataSource = items;
 
-                ClearForm();
-
-            }
-            else
+            if (!int.TryParse(txtID.Text, out int modelID))
             {
-                dgvModel.DataSource = null;
-                MessageBox.Show("No blanket model found with the given ID.", "Not Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                ClearForm();
-                LoadData();
+                MessageBox.Show("Invalid Model ID. Please enter a number.", "Input Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
+            }
+
+            using (HttpClient client = GetHttpClient())
+            {
+                try
+                {
+                    string url = "https://localhost:7175/api/BlanketModel/" + modelID;
+                    var response = client.GetAsync(url).Result;
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var read = response.Content.ReadAsStringAsync().Result;
+                        Item foundItem = (new JavaScriptSerializer()).Deserialize<Item>(read);
+
+                        dgvModel.DataSource = null;
+                        List<Item> items = new List<Item> { foundItem };
+                        dgvModel.DataSource = items;
+
+                        if (dgvModel.Rows.Count > 0)
+                        {
+                            dgvModel.Rows[0].Selected = true;
+                        }
+                        ClearForm();
+                    }
+                    else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    {
+                        MessageBox.Show("No blanket model found with the given ID.", "Not Found", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        dgvModel.DataSource = null;
+                        ClearForm();
+                    }
+                    else
+                    {
+                        string errorContent = response.Content.ReadAsStringAsync().Result;
+                        MessageBox.Show($"Failed to retrieve model. Status: {response.StatusCode}\nDetails: {errorContent}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        dgvModel.DataSource = null;
+                        ClearForm();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"An error occurred while finding the model: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    dgvModel.DataSource = null;
+                    ClearForm();
+                }
             }
 
         }
