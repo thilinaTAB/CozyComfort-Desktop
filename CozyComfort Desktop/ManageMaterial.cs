@@ -16,5 +16,10 @@ namespace CozyComfort_Desktop
         {
             InitializeComponent();
         }
+
+        private void ManageMaterial_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }
