@@ -31,6 +31,7 @@
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.blanketModelToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.materialInventoryToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.ordersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -38,7 +39,8 @@
             // 
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.blanketModelToolStripMenuItem,
-            this.materialInventoryToolStripMenuItem});
+            this.materialInventoryToolStripMenuItem,
+            this.ordersToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Size = new System.Drawing.Size(800, 24);
@@ -58,6 +60,13 @@
             this.materialInventoryToolStripMenuItem.Size = new System.Drawing.Size(115, 20);
             this.materialInventoryToolStripMenuItem.Text = "Material inventory";
             this.materialInventoryToolStripMenuItem.Click += new System.EventHandler(this.materialInventoryToolStripMenuItem_Click);
+            // 
+            // ordersToolStripMenuItem
+            // 
+            this.ordersToolStripMenuItem.Name = "ordersToolStripMenuItem";
+            this.ordersToolStripMenuItem.Size = new System.Drawing.Size(54, 20);
+            this.ordersToolStripMenuItem.Text = "Orders";
+            this.ordersToolStripMenuItem.Click += new System.EventHandler(this.ordersToolStripMenuItem_Click);
             // 
             // CozyComfort
             // 
@@ -83,6 +92,7 @@
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem blanketModelToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem materialInventoryToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem ordersToolStripMenuItem;
     }
 }
 
