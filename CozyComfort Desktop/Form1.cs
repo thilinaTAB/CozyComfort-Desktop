@@ -43,5 +43,13 @@ namespace CozyComfort_Desktop
             manageMaterial.MdiParent = this;
             manageMaterial.Show();
         }
+
+        private void ordersToolStripMenuItem_Click(object sender, EventArgs e)
+        {   CloseAllMdiChildren();
+            OrderView orderView = new OrderView();
+            orderView.MdiParent = this;
+            orderView.Show();
+
+        }
     }
 }
