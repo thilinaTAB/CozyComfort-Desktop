@@ -5,12 +5,22 @@ using System.Text;
 using System.Web.Script.Serialization;
 using System.Windows.Forms;
 using System.Configuration;
-using CozyComfort_Desktop;
+using System.Threading.Tasks;
 
 namespace CozyComfort_Desktop
 {
     public partial class OrderView : Form
     {
+        private readonly HttpClient _client;
+        private const string BaseApiUrl = "https://localhost:7175/";
+        private const string ManufacturerId = "1";
+
+        public OrderView()
+        {
+            InitializeComponent();
+            _client = GetHttpClient();
+        }
+
         private HttpClient GetHttpClient()
         {
             HttpClient client = new HttpClient();
@@ -19,105 +29,96 @@ namespace CozyComfort_Desktop
             {
                 client.DefaultRequestHeaders.Add("X-API-KEY", apiKey);
             }
-            client.BaseAddress = new Uri("https://localhost:7175/");
+            client.BaseAddress = new Uri(BaseApiUrl);
             return client;
         }
-        public OrderView()
+
+        private async void Oder_Load(object sender, EventArgs e)
         {
-            InitializeComponent();
+            await LoadOrdersAsync();
         }
 
-        private void Oder_Load(object sender, EventArgs e)
+        private async Task LoadOrdersAsync()
         {
-            LoadOrders();
-        }
-
-        private void LoadOrders()
-        {
-            using (HttpClient client = GetHttpClient())
+            try
             {
-                try
+                var response = await _client.GetAsync($"api/Order/{ManufacturerId}");
+                if (response.IsSuccessStatusCode)
                 {
-                    var response = client.GetAsync("https://localhost:7175/api/Order/1").Result;
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var json = response.Content.ReadAsStringAsync().Result;
-                        var orders = (new JavaScriptSerializer()).Deserialize<List<OrderItem>>(json);
-                        dgvOrder.DataSource = orders;
-                    }
-                    else
-                    {
-                        MessageBox.Show("Failed to load orders.");
-                    }
+                    var json = await response.Content.ReadAsStringAsync();
+                    var orders = new JavaScriptSerializer().Deserialize<List<OrderItem>>(json);
+                    dgvOrder.DataSource = orders;
                 }
-                catch (Exception ex)
+                else
                 {
-                    MessageBox.Show("Error loading orders: " + ex.Message);
+                    MessageBox.Show("Failed to load orders. Status code: " + response.StatusCode);
                 }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading orders: " + ex.Message);
             }
         }
 
         private void dgvOrder_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.ColumnIndex == 0 && e.RowIndex >= 0)
+            if (e.RowIndex >= 0)
             {
                 var row = dgvOrder.Rows[e.RowIndex];
 
-                lblID.Text = row.Cells["OrderID"].Value.ToString();
+                lblID.Text = row.Cells["OrderID"].Value?.ToString();
                 lblDate.Text = Convert.ToDateTime(row.Cells["OrderDate"].Value).ToShortDateString();
-                lblModel.Text = row.Cells["ModelName"].Value.ToString();
-                lblQty.Text = row.Cells["Quantity"].Value.ToString();
-                lblUnit.Text = row.Cells["Price"].Value.ToString();
-                label8.Text = row.Cells["Total"].Value.ToString();
-                lblStatus.Text = row.Cells["Status"].Value.ToString();
+                lblModel.Text = row.Cells["ModelName"].Value?.ToString();
+                lblQty.Text = row.Cells["Quantity"].Value?.ToString();
+                lblUnit.Text = row.Cells["Price"].Value?.ToString();
+                label8.Text = row.Cells["Total"].Value?.ToString();
+                lblStatus.Text = row.Cells["Status"].Value?.ToString();
             }
         }
 
-        private void UpdateStatus(string newStatus)
+        private async Task UpdateStatusAsync(string newStatus)
         {
             if (string.IsNullOrEmpty(lblID.Text))
             {
-                MessageBox.Show("Select an order first.");
+                MessageBox.Show("Please select an order first.");
                 return;
             }
 
-            int orderId = int.Parse(lblID.Text);
-
-            using (HttpClient client = GetHttpClient())
+            if (!int.TryParse(lblID.Text, out int orderId))
             {
-                var url = "https://localhost:7175/api/Order/1"+ "/status";
-                var data = new JavaScriptSerializer().Serialize(new { Status = newStatus });
-                var content = new StringContent(data, Encoding.UTF8, "application/json");
+                MessageBox.Show("Invalid Order ID.");
+                return;
+            }
 
-                try
+            try
+            {
+                var url = $"api/Order/{orderId}?status={newStatus}";
+                var response = await _client.PutAsync(url, null);
+                if (response.IsSuccessStatusCode)
                 {
-                    var response = client.PutAsync(url, content).Result;
-                    if (response.IsSuccessStatusCode)
-                    {
-                        MessageBox.Show($"Order marked as {newStatus}.");
-                        LoadOrders();
-                    }
-                    else
-                    {
-                        MessageBox.Show($"Failed to update status. {response.StatusCode}");
-                    }
+                    MessageBox.Show($"Order {orderId} marked as {newStatus} successfully.");
+                    await LoadOrdersAsync();
                 }
-                catch (Exception ex)
+                else
                 {
-                    MessageBox.Show("Error updating status: " + ex.Message);
+                    string reason = await response.Content.ReadAsStringAsync();
+                    MessageBox.Show($"Failed to update status. Status code: {response.StatusCode}. Reason: {reason}");
                 }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error updating status: " + ex.Message);
             }
         }
 
-        private void btnAccept_Click(object sender, EventArgs e)
+        private async void btnAccept_Click(object sender, EventArgs e)
         {
-            UpdateStatus("Accepted");
+            await UpdateStatusAsync("Accepted");
         }
 
-        private void btnReject_Click(object sender, EventArgs e)
+        private async void btnReject_Click(object sender, EventArgs e)
         {
-            UpdateStatus("Rejected");
+            await UpdateStatusAsync("Rejected");
         }
-
     }
 }
